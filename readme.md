@@ -17,10 +17,10 @@ A powerful audio analysis tool that extracts musical features from audio files a
 ## 🖥️ Screenshots
 
 ### Analysis Results
-![Analysis Results](https://raw.githubusercontent.com/username/audio-analyzer-llm/main/screenshots/analysis_results.png)
+![spectrum](https://github.com/user-attachments/assets/b7fcbb28-a415-4b02-ae7d-7715c90ca341)
+![mel bands](https://github.com/user-attachments/assets/bca379a5-c83d-49a5-bdbe-2d158d1cb3fd)
+![mfcc co](https://github.com/user-attachments/assets/6aaade4b-b789-4774-9864-3983ffc98e6d)
 
-### Audio Visualizations
-![Audio Visualizations](https://raw.githubusercontent.com/username/audio-analyzer-llm/main/screenshots/visualizations.png)
 
 ## 🛠️ Technology Stack
 
