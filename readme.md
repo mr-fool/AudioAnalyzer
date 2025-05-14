@@ -1,6 +1,7 @@
 # Audio Analyzer for LLM
 
-![Audio Analyzer Screenshot](https://raw.githubusercontent.com/username/audio-analyzer-llm/main/screenshots/app_screenshot.png)
+![screen](https://github.com/user-attachments/assets/fc6b3ec4-15d9-447a-8982-5cc3982c8df1)
+
 
 A powerful audio analysis tool that extracts musical features from audio files and generates natural language descriptions suitable for use with Large Language Models (LLMs). The application provides comprehensive analysis of key, tempo, mood, instrumentation, and other musical characteristics, visualized through an intuitive PyQt5 interface.
 
