@@ -1,0 +1,9 @@
+# Audio analysis library
+essentia
+
+# Required dependencies
+numpy
+matplotlib
+
+# GUI framework
+PyQt5
