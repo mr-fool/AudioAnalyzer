@@ -1,6 +1,6 @@
 import os
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton, 
-                           QLabel, QFileDialog, QTextEdit, QGroupBox)
+                           QLabel, QFileDialog, QTextEdit, QGroupBox, QApplication)
 from PyQt5.QtGui import QClipboard
 from PyQt5.QtCore import Qt
 import essentia.standard as es
