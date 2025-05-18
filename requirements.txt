@@ -1,9 +1,4 @@
-# Audio analysis library
 essentia
-
-# Required dependencies
-numpy
+numpy<2.0
 matplotlib
-
-# GUI framework
 PyQt5
