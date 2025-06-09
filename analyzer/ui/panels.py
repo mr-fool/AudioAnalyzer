@@ -1,8 +1,9 @@
 import os
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton, 
-                           QLabel, QFileDialog, QTextEdit, QGroupBox, QApplication)
+                           QLabel, QFileDialog, QTextEdit, QGroupBox, QApplication,
+                           QComboBox, QSpinBox, QDoubleSpinBox)
 from PyQt5.QtGui import QClipboard
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QThread, pyqtSignal
 import essentia.standard as es
 
 from .canvas import MatplotlibCanvas
@@ -73,6 +74,9 @@ class ControlPanel(QWidget):
         
         if file_path:
             self.file_path_label.setText(file_path)
+            # NEW: Enable visualization as soon as file is selected
+            if hasattr(self.parent, 'video_viz_panel'):
+                self.parent.video_viz_panel.set_audio_file(file_path)
     
     def analyze_audio(self):
         file_path = self.file_path_label.text()
@@ -210,3 +214,178 @@ class VisualizationPanel(QWidget):
             self.canvas.ax.text(0.5, 0.5, "Unable to display MFCC coefficients", 
                               horizontalalignment='center', verticalalignment='center')
             self.canvas.draw()
+
+
+# NEW: Video Visualization Thread
+class VisualizationThread(QThread):
+    """Thread for generating visualizations without blocking UI"""
+    progress = pyqtSignal(str)  # Progress messages
+    finished = pyqtSignal(str)  # Completion message with file path
+    error = pyqtSignal(str)     # Error messages
+    
+    def __init__(self, audio_file, output_file, duration, fps, style):
+        super().__init__()
+        self.audio_file = audio_file
+        self.output_file = output_file  
+        self.duration = duration
+        self.fps = fps
+        self.style = style
+    
+    def run(self):
+        try:
+            from ..visualizer import VisualizationGenerator
+            
+            self.progress.emit("Initializing visualization generator...")
+            generator = VisualizationGenerator()
+            
+            self.progress.emit("Processing audio and generating frames...")
+            result = generator.create_visualization_video(
+                self.audio_file,
+                self.output_file,
+                self.duration,
+                self.fps,
+                self.style
+            )
+            
+            if result:
+                self.finished.emit(f"Visualization saved: {result}")
+            else:
+                self.error.emit("Failed to generate visualization")
+                
+        except Exception as e:
+            self.error.emit(f"Error: {str(e)}")
+
+
+# NEW: Video Visualization Control Panel
+class VideoVisualizationPanel(QWidget):
+    """
+    Panel for generating video visualizations
+    Integrates with your existing AudioAnalyzer
+    """
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.parent = parent
+        self.current_audio_file = None
+        self.visualization_thread = None
+        self.init_ui()
+    
+    def init_ui(self):
+        """Setup the visualization UI elements"""
+        layout = QVBoxLayout()
+        
+        # Create group box for video visualization
+        viz_group = QGroupBox("Video Visualization")
+        viz_layout = QVBoxLayout()
+        
+        # Settings layout
+        settings_layout = QHBoxLayout()
+        
+        # Duration setting
+        settings_layout.addWidget(QLabel("Duration (s):"))
+        self.duration_spin = QDoubleSpinBox()
+        self.duration_spin.setRange(5.0, 60.0)
+        self.duration_spin.setValue(10.0)
+        self.duration_spin.setSingleStep(1.0)
+        settings_layout.addWidget(self.duration_spin)
+        
+        # FPS setting
+        settings_layout.addWidget(QLabel("FPS:"))
+        self.fps_combo = QComboBox()
+        self.fps_combo.addItems(['15', '20', '24', '30'])
+        self.fps_combo.setCurrentText('24')
+        settings_layout.addWidget(self.fps_combo)
+        
+        # Style setting
+        settings_layout.addWidget(QLabel("Style:"))
+        self.style_combo = QComboBox()
+        self.style_combo.addItems(['mixed', 'mandala', 'kaleidoscope'])
+        settings_layout.addWidget(self.style_combo)
+        
+        viz_layout.addLayout(settings_layout)
+        
+        # Generate button
+        self.generate_btn = QPushButton("Generate Visualization")
+        self.generate_btn.clicked.connect(self.generate_visualization)
+        self.generate_btn.setEnabled(False)  # Disabled until audio is loaded
+        viz_layout.addWidget(self.generate_btn)
+        
+        # Status label
+        self.status_label = QLabel("Load an audio file to enable visualization")
+        self.status_label.setStyleSheet("color: gray; font-style: italic;")
+        viz_layout.addWidget(self.status_label)
+        
+        viz_group.setLayout(viz_layout)
+        layout.addWidget(viz_group)
+        self.setLayout(layout)
+    
+    def set_audio_file(self, audio_file_path):
+        """Called when an audio file is selected (no analysis required)"""
+        self.current_audio_file = audio_file_path
+        self.generate_btn.setEnabled(True)
+        self.status_label.setText(f"Ready to visualize: {os.path.basename(audio_file_path)}")
+        self.status_label.setStyleSheet("color: green;")
+    
+    def clear_audio_file(self):
+        """Called when audio file is cleared"""
+        self.current_audio_file = None
+        self.generate_btn.setEnabled(False)
+        self.status_label.setText("Load an audio file to enable visualization")
+        self.status_label.setStyleSheet("color: gray; font-style: italic;")
+    
+    def generate_visualization(self):
+        """Generate the visualization"""
+        if not self.current_audio_file:
+            self.status_label.setText("No audio file loaded")
+            self.status_label.setStyleSheet("color: red;")
+            return
+        
+        # Get settings
+        duration = self.duration_spin.value()
+        fps = int(self.fps_combo.currentText())
+        style = self.style_combo.currentText()
+        
+        # Generate output filename
+        base_name = os.path.splitext(os.path.basename(self.current_audio_file))[0]
+        output_file = f"{base_name}_visualization.mp4"
+        
+        # Disable button during processing
+        self.generate_btn.setEnabled(False)
+        self.status_label.setText("Generating visualization...")
+        self.status_label.setStyleSheet("color: blue;")
+        
+        # Start visualization in separate thread
+        self.visualization_thread = VisualizationThread(
+            self.current_audio_file,
+            output_file,
+            duration,
+            fps,
+            style
+        )
+        
+        # Connect signals
+        self.visualization_thread.progress.connect(self.on_progress)
+        self.visualization_thread.finished.connect(self.on_finished)
+        self.visualization_thread.error.connect(self.on_error)
+        
+        # Start the thread
+        self.visualization_thread.start()
+    
+    def on_progress(self, message):
+        """Handle progress updates"""
+        self.status_label.setText(message)
+        self.status_label.setStyleSheet("color: blue;")
+    
+    def on_finished(self, message):
+        """Handle completion"""
+        self.status_label.setText(message)
+        self.status_label.setStyleSheet("color: green;")
+        self.generate_btn.setEnabled(True)
+        self.visualization_thread = None
+    
+    def on_error(self, error_message):
+        """Handle errors"""
+        self.status_label.setText(f"Error: {error_message}")
+        self.status_label.setStyleSheet("color: red;")
+        self.generate_btn.setEnabled(True)
+        self.visualization_thread = None

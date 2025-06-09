@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import (QMainWindow, QWidget, QVBoxLayout,
 from PyQt5.QtCore import Qt, pyqtSlot
 import essentia.standard as es
 
-from .panels import ControlPanel, VisualizationPanel
+from .panels import ControlPanel, VisualizationPanel, VideoVisualizationPanel
 from ..utils.helpers import AnalyzerThread
 
 class AudioAnalyzerApp(QMainWindow):
@@ -12,9 +12,10 @@ class AudioAnalyzerApp(QMainWindow):
         super().__init__()
         self.analyzer = analyzer
         self.current_audio = None
+        self.current_file_path = None  # NEW: Track current file path
         self.results = None
         self.setWindowTitle("Audio Analyzer for LLM")
-        self.setGeometry(100, 100, 900, 600)
+        self.setGeometry(100, 100, 1100, 700)  # Made slightly larger for new panel
         self.init_ui()
         
     def init_ui(self):
@@ -24,12 +25,20 @@ class AudioAnalyzerApp(QMainWindow):
         # Create panels
         self.control_panel = ControlPanel(self)
         self.visualization_panel = VisualizationPanel(self)
+        self.video_viz_panel = VideoVisualizationPanel(self)  # NEW: Video visualization panel
+        
+        # Create left panel with controls and video visualization
+        left_widget = QWidget()
+        left_layout = QVBoxLayout()
+        left_layout.addWidget(self.control_panel)
+        left_layout.addWidget(self.video_viz_panel)  # NEW: Add video viz panel
+        left_widget.setLayout(left_layout)
         
         # Create splitter
         splitter = QSplitter(Qt.Horizontal)
-        splitter.addWidget(self.control_panel)
-        splitter.addWidget(self.visualization_panel)
-        splitter.setSizes([400, 500])
+        splitter.addWidget(left_widget)  # Left side: controls + video viz
+        splitter.addWidget(self.visualization_panel)  # Right side: plots
+        splitter.setSizes([500, 600])  # Adjusted sizes
         
         main_layout.addWidget(splitter)
         main_widget.setLayout(main_layout)
@@ -39,7 +48,11 @@ class AudioAnalyzerApp(QMainWindow):
         if file_path == "No file selected" or not os.path.exists(file_path):
             self.control_panel.results_text.setText("Please select a valid audio file first.")
             return
-            
+        
+        # NEW: Store the current file path and enable visualization immediately
+        self.current_file_path = file_path
+        self.video_viz_panel.set_audio_file(file_path)  # Enable visualization right away
+        
         self.control_panel.results_text.setText("Analyzing audio...")
         self.control_panel.description_text.setText("")
         
@@ -69,6 +82,10 @@ class AudioAnalyzerApp(QMainWindow):
         
         # Show spectrum visualization
         self.visualization_panel.show_spectrum(self.current_audio, self.analyzer.sample_rate)
+        
+        # NEW: Enable video visualization now that audio is analyzed
+        if self.current_file_path:
+            self.video_viz_panel.set_audio_file(self.current_file_path)
     
     @pyqtSlot(str)
     def show_error(self, error_msg):
@@ -81,3 +98,6 @@ class AudioAnalyzerApp(QMainWindow):
         canvas.ax.text(0.5, 0.5, "Analysis failed - No visualization available", 
                       horizontalalignment='center', verticalalignment='center')
         canvas.draw()
+        
+        # NEW: Clear video visualization on error
+        self.video_viz_panel.clear_audio_file()
