@@ -29,7 +29,9 @@ WORKDIR /app
 # Copy requirements and install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+    pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir "numpy>=1.21.0,<2.0.0"  # Add this line
+
 
 # Copy your existing analyzer code structure
 COPY analyzer/ ./analyzer/
