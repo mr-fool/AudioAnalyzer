@@ -1,6 +1,6 @@
 # Audio Analyzer for LLM with Advanced Visualizations
 
-![initial](https://github.com/user-attachments/assets/a4acb904-6942-427b-87fb-f82225b033aa)
+![screen](https://github.com/user-attachments/assets/fc6b3ec4-15d9-447a-8982-5cc3982c8df1)
 
 A powerful audio analysis tool that extracts musical features from audio files and generates natural language descriptions suitable for use with Large Language Models (LLMs). The application provides comprehensive analysis of key, tempo, mood, instrumentation, and other musical characteristics, visualized through an intuitive PyQt5 interface. **NEW: Now includes stunning 90s-style geometric mandala and kaleidoscope video visualizations!**
 
@@ -15,23 +15,50 @@ A powerful audio analysis tool that extracts musical features from audio files a
 - **Instrument Recognition**: Detect probable instruments present in the audio
 
 ### NEW: Video Visualizations
-- **Geometric Mandala Visualizations**: Complex sacred geometry patterns that respond to your music
+- **Radial Symmetry Mandala**: Organic curved petals with flowing gradients that respond to your music
+- **Sacred Geometry**: Complex geometric patterns with mathematical precision and interlocking shapes
 - **Kaleidoscope Effects**: Flowing organic shapes with liquid-like movement
 - **Audio-Reactive**: Visuals respond in real-time to bass, mid, and treble frequencies
-- **Multiple Styles**: Choose between mandala, kaleidoscope, or mixed (auto-switching) modes
+- **Multiple Styles**: Choose between mandala, sacred geometry, kaleidoscope, or mixed (auto-switching) modes
 - **MP4 Export**: Generate high-quality video files ready for social media or presentations
-- **Customizable Settings**: Adjust duration (5-60s), frame rate (15-30 FPS), and visual style
+- **Customizable Settings**: Adjust duration (5-60s), frame rate (15-30 FPS), visual style, and custom filenames
 
 ## 🖥️ Screenshots
 
 ### Analysis Results
-![spectrum](https://github.com/user-attachments/assets/b1b8a221-d4c3-4147-8070-2412108e71a7)
-![mfcc](https://github.com/user-attachments/assets/1f62abd7-eb77-4d5d-b7ef-23493ba6dc6e)
-![mel bands](https://github.com/user-attachments/assets/0f10c0b5-5515-429a-a636-13655688ddf0)
-
+![spectrum](https://github.com/user-attachments/assets/b7fcbb28-a415-4b02-ae7d-7715c90ca341)
+![mel bands](https://github.com/user-attachments/assets/bca379a5-c83d-49a5-bdbe-2d158d1cb3fd)
+![mfcc co](https://github.com/user-attachments/assets/6aaade4b-b789-4774-9864-3983ffc98e6d)
 
 ### NEW: Video Visualizations
-*Example visualizations showing geometric mandala and kaleidoscope effects responding to music*
+*Example visualizations showing radial symmetry mandala, sacred geometry, and kaleidoscope effects responding to music*
+
+## 📹 Sample Visualizations
+
+### Radial Symmetry Mandala
+
+https://github.com/user-attachments/assets/44ca95cc-e1e4-41ee-8a37-1fbf33a0ff5b
+*Organic curved petals with flowing gradients responding to bass and mid frequencies*
+
+### Sacred Geometry
+
+https://github.com/user-attachments/assets/def74717-e22f-4d79-9f28-e81f0391d51c
+*Complex interlocking geometric patterns with mathematical precision*
+
+### Kaleidoscope
+
+https://github.com/user-attachments/assets/37051098-f252-4984-a678-f96517c43ca7
+*Flowing organic shapes with liquid-like movement and symmetric mirroring*
+
+### Mixed Mode Examples
+
+https://github.com/user-attachments/assets/dd39cee9-09a9-4320-832c-cc737a91d9ed
+*Auto-switching between styles based on audio characteristics*
+
+> **Note**: Replace the placeholder hashes above with actual GitHub-hosted images or GIFs of your visualizations. To add your samples:
+> 1. Generate sample visualizations with your application
+> 2. Upload them to a GitHub issue or release to get the GitHub CDN URLs
+> 3. Replace the placeholder URLs with the actual GitHub asset URLs
 
 ## 🛠️ Technology Stack
 
@@ -165,9 +192,10 @@ make clean
 3. **Generate visualizations** (NEW):
    - Set duration (5-60 seconds)
    - Choose frame rate (15-30 FPS)
-   - Select style: Mandala, Kaleidoscope, or Mixed
-   - Click "Generate Visualization" to create MP4 file
-   - Output saved as `[filename]_visualization.mp4`
+   - Select style: Mandala, Sacred Geometry, Kaleidoscope, or Mixed
+   - Enter custom filename (optional)
+   - Click "Generate Visualization" to create MP4/AVI file
+   - Output saved with your chosen filename or auto-generated name
 
 4. **Analyze audio** (optional):
    - Click "Analyze" to process the file for detailed analysis
@@ -177,22 +205,32 @@ make clean
 
 ### NEW: Video Visualization Styles
 
-#### Geometric Mandala
-- **Complex sacred geometry patterns** with mathematical precision
-- **Multiple concentric layers** of geometric shapes
-- **Audio-reactive segments**: Bass controls number of elements, mid frequencies affect rotation
-- **Perfect symmetry**: Hexagons, stars, and connecting lines create intricate patterns
+#### Radial Symmetry Mandala
+- **Organic curved petals** with smooth flowing gradients
+- **4 concentric layers** creating depth and complexity
+- **36-point smooth curves** for natural organic appearance
+- **Audio-reactive**: Bass controls petal count, mid frequencies affect flow patterns
+- **Breathing effects**: Petals pulse and flow with the music
+
+#### Sacred Geometry
+- **Complex mathematical patterns** with interlocking geometric shapes
+- **5 distinct layers**: Outer ring, star polygons, inner polygons, Flower of Life center, connecting lines
+- **Perfect symmetry**: Hexagons, triangles, and sacred ratios
+- **Audio-reactive**: Different frequency bands control various geometric elements
+- **Precision**: Mathematical relationships create harmonious visual balance
 
 #### Kaleidoscope 
 - **Flowing organic shapes** with liquid-like movement
 - **64 flowing segments** with multiple depth layers
 - **Wave-based motion**: Multiple sine/cosine functions create organic flow
 - **Symmetric mirroring**: True kaleidoscope effect with dynamic color cycling
+- **Audio-reactive**: All frequency ranges contribute to fluid motion
 
 #### Mixed Mode
-- **Automatic switching** between mandala and kaleidoscope based on audio characteristics
-- **Bass-heavy sections**: Display geometric mandalas
-- **Treble-heavy sections**: Show flowing kaleidoscopes
+- **Intelligent auto-switching** between all three styles based on audio characteristics
+- **Bass-heavy sections**: Display radial symmetry mandalas
+- **Mid-heavy sections**: Show sacred geometry patterns
+- **Treble-heavy sections**: Flow with kaleidoscope effects
 - **Seamless transitions**: Smooth changes based on real-time audio analysis
 
 ### Integration with LLMs
@@ -293,9 +331,10 @@ Essentia requires NumPy 1.x for compatibility.
 
 ### Visualization Issues
 
-- **No MP4 output**: Check that OpenCV video writer supports mp4v codec
-- **Poor audio reactivity**: Try increasing audio amplitude or adjusting frequency band scaling
+- **"Could not open video writer" error**: The system automatically tries multiple codecs (mp4v, XVID, MJPG, X264) and file formats (MP4, AVI) for maximum compatibility
+- **Poor audio reactivity**: Try increasing audio amplitude or adjusting frequency band scaling in the code
 - **Performance issues**: Reduce frame rate or duration for faster processing
+- **Large file sizes**: Lower frame rate or use shorter durations; 1024px renders require more processing power
 
 ### Essentia Installation Issues
 
@@ -309,14 +348,27 @@ Essentia requires NumPy 1.x for compatibility.
 
 The visualization system is designed to be extensible. To add new styles:
 
-1. Create a new generation method in `analyzer/visualizer.py`
-2. Add the style to the dropdown in `analyzer/ui/panels.py`
+1. Create a new generation method in `analyzer/visualizer.py` (e.g., `generate_your_style_frame()`)
+2. Add the style to the dropdown in `analyzer/ui/panels.py` 
 3. Update the style selection logic in `create_visualization_video()`
+4. Consider audio reactivity: map bass, mid, treble, and mel bands to visual parameters
 
 ### Modifying Color Palettes
 
-Edit the `color_palettes` dictionary in `VisualizationGenerator.__init__()` to add new color schemes.
+Edit the `color_palettes` dictionary in `VisualizationGenerator.__init__()` to add new color schemes:
+```python
+self.color_palettes = {
+    'your_palette': [(R, G, B), (R, G, B), ...],  # Add custom colors
+    'neon': [...],  # Existing palettes
+    'plasma': [...]
+}
+```
 
 ### Adjusting Audio Reactivity
 
-Modify the scaling factors in `extract_frame_features()` to change how responsive the visuals are to different frequency ranges.
+Modify the scaling factors in `extract_frame_features()` to change how responsive the visuals are:
+```python
+bass = min(features['bass'] * 500, 1.0)  # Increase multiplier for more sensitivity
+mid = min(features['mid'] * 300, 1.0)    # Adjust these values as needed
+treble = min(features['treble'] * 200, 1.0)
+```
