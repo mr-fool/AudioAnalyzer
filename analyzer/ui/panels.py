@@ -299,7 +299,7 @@ class VideoVisualizationPanel(QWidget):
         # Style setting
         settings_layout.addWidget(QLabel("Style:"))
         self.style_combo = QComboBox()
-        self.style_combo.addItems(['mixed', 'mandala', 'kaleidoscope'])
+        self.style_combo.addItems(['mixed', 'mandala', 'sacred_geometry', 'kaleidoscope'])
         settings_layout.addWidget(self.style_combo)
         
         viz_layout.addLayout(settings_layout)
