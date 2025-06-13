@@ -1,4 +1,4 @@
-# Makefile for Audio Analyzer on Ubuntu (No Docker)
+# Makefile for Audio Analyzer with Visualizations on Ubuntu (No Docker)
 
 # Variables
 PYTHON := python3
@@ -30,7 +30,7 @@ create-venv: check-venv
 install-deps: create-venv
 	@echo "Installing dependencies..."
 	@. $(VENV_ACTIVATE) && $(PIP) install --upgrade pip
-	@echo "Installing system dependencies for Essentia and PyQt5..."
+	@echo "Installing system dependencies for Essentia, PyQt5, and OpenCV..."
 	@sudo apt-get update && sudo apt-get install -y \
 		build-essential \
 		pkg-config \
@@ -49,7 +49,13 @@ install-deps: create-venv
 		qtbase5-dev \
 		qt5-qmake \
 		qttools5-dev-tools \
-		libqt5x11extras5-dev
+		libqt5x11extras5-dev \
+		libopencv-dev \
+		python3-opencv \
+		libjpeg-dev \
+		libpng-dev \
+		libtiff-dev \
+		libgtk-3-dev
 	@echo "Installing Python dependencies..."
 	@. $(VENV_ACTIVATE) && $(PIP) install -r requirements.txt
 
@@ -72,10 +78,12 @@ clean:
 	rm -rf $(VENV) __pycache__ .pytest_cache .coverage
 	find . -type d -name __pycache__ -exec rm -rf {} +
 	find . -type f -name "*.pyc" -delete
+	find . -type f -name "*.mp4" -exec rm -f {} +
+	@echo "Cleaned up cache files and generated visualizations."
 
 # Install just system dependencies (useful for troubleshooting)
 system-deps:
-	@echo "Installing system dependencies for Essentia and PyQt5..."
+	@echo "Installing system dependencies for Essentia, PyQt5, and OpenCV..."
 	@sudo apt-get update && sudo apt-get install -y \
 		python3-venv \
 		python3-dev \
@@ -95,7 +103,13 @@ system-deps:
 		qtbase5-dev \
 		qt5-qmake \
 		qttools5-dev-tools \
-		libqt5x11extras5-dev
+		libqt5x11extras5-dev \
+		libopencv-dev \
+		python3-opencv \
+		libjpeg-dev \
+		libpng-dev \
+		libtiff-dev \
+		libgtk-3-dev
 
 # Install just Python dependencies (useful for troubleshooting)
 python-deps: create-venv
@@ -110,8 +124,9 @@ direct-install:
 		python3-dev \
 		python3-numpy \
 		python3-matplotlib \
-		python3-pyqt5
-	@echo "Installing Essentia dependencies..."
+		python3-pyqt5 \
+		python3-opencv
+	@echo "Installing Essentia and visualization dependencies..."
 	@sudo apt-get install -y \
 		build-essential \
 		pkg-config \
@@ -124,8 +139,36 @@ direct-install:
 		libsamplerate0-dev \
 		libtag1-dev \
 		libchromaprint-dev \
-		libsndfile1-dev
+		libsndfile1-dev \
+		libopencv-dev \
+		libjpeg-dev \
+		libpng-dev \
+		libtiff-dev
 	@echo "Installing Python packages..."
-	@sudo $(PIP) install essentia
+	@sudo $(PIP) install essentia opencv-python pillow
 
-.PHONY: all setup run clean system-deps python-deps check-venv create-venv install-deps direct-install
+# Test visualization (NEW: Quick test target)
+test-viz:
+	@if [ ! -f $(VENV_ACTIVATE) ]; then \
+		echo "Virtual environment not found. Please run 'make setup' first."; \
+		exit 1; \
+	fi
+	@echo "Testing visualization dependencies..."
+	@. $(VENV_ACTIVATE) && $(PYTHON) -c "import cv2; import numpy as np; from PIL import Image; import essentia.standard as es; print('All visualization dependencies working!')"
+
+# Show status
+status:
+	@echo "=== Audio Analyzer Status ==="
+	@if [ -d $(VENV) ]; then \
+		echo "Virtual environment: EXISTS"; \
+		if [ -f $(VENV_ACTIVATE) ]; then \
+			echo "Activation script: EXISTS"; \
+			echo "Python packages:"; \
+			. $(VENV_ACTIVATE) && pip list | grep -E "(essentia|opencv|pillow|PyQt5|numpy)"; \
+		fi; \
+	else \
+		echo "Virtual environment: NOT FOUND"; \
+	fi
+	@echo "=========================="
+
+.PHONY: all setup run clean system-deps python-deps check-venv create-venv install-deps direct-install test-viz status
