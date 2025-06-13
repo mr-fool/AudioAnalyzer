@@ -36,30 +36,24 @@ A powerful audio analysis tool that extracts musical features from audio files a
 ## 📹 Sample Visualizations
 
 ### Radial Symmetry Mandala
+![mandala](https://github.com/user-attachments/assets/122618c9-2fe7-4bee-8ac3-6101facbc1bd)
 
-https://github.com/user-attachments/assets/44ca95cc-e1e4-41ee-8a37-1fbf33a0ff5b
 *Organic curved petals with flowing gradients responding to bass and mid frequencies*
 
 ### Sacred Geometry
 
-https://github.com/user-attachments/assets/def74717-e22f-4d79-9f28-e81f0391d51c
+![scared_geometry](https://github.com/user-attachments/assets/60c0ede4-e11e-4b3e-9e5c-399a4fbf1083)
+
 *Complex interlocking geometric patterns with mathematical precision*
 
 ### Kaleidoscope
+![kaleidoscope](https://github.com/user-attachments/assets/b4f29a47-4cd7-43cf-a5dd-0c0185d3419d)
 
-https://github.com/user-attachments/assets/37051098-f252-4984-a678-f96517c43ca7
 *Flowing organic shapes with liquid-like movement and symmetric mirroring*
 
 ### Mixed Mode Examples
 
-https://github.com/user-attachments/assets/dd39cee9-09a9-4320-832c-cc737a91d9ed
-*Auto-switching between styles based on audio characteristics*
-
-> **Note**: Replace the placeholder hashes above with actual GitHub-hosted images or GIFs of your visualizations. To add your samples:
-> 1. Generate sample visualizations with your application
-> 2. Upload them to a GitHub issue or release to get the GitHub CDN URLs
-> 3. Replace the placeholder URLs with the actual GitHub asset URLs
-
+![mixed](https://github.com/user-attachments/assets/18c8449b-f2df-4851-a4e8-e99b6f31d7ff)
 ## 🛠️ Technology Stack
 
 This application leverages several powerful libraries:
