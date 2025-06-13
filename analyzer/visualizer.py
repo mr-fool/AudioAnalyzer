@@ -270,7 +270,7 @@ class VisualizationGenerator:
         return img
     
     def generate_mandala_frame(self, features: Dict, time_progress: float) -> np.ndarray:
-        """Generate radial symmetry pattern with smooth curved petals like preview.webp"""
+        """Generate true radial symmetry pattern with organic curved petals like preview.webp"""
         img = np.zeros((self.height, self.width, 3), dtype=np.uint8)
         
         # Extract and scale features
@@ -283,118 +283,128 @@ class VisualizationGenerator:
         colors = self.color_palettes['neon']
         center_x, center_y = self.center
         
-        # Radial symmetry parameters
-        num_petals = 8 + int(bass * 8)  # 8-16 petals
-        rotation = (time_progress * 12 + mid * 8) % 360
-        base_radius = 60 + amplitude * 100  # Base size
+        # Parameters for the organic radial pattern
+        num_main_petals = 8 + int(bass * 4)  # 8-12 main petals
+        rotation = (time_progress * 5 + mid * 3) % 360  # Slower rotation
+        base_radius = 80 + amplitude * 100  # Base size
         
-        # Create the characteristic curved petal pattern
-        for ring in range(4):  # Multiple concentric rings
-            ring_scale = 0.5 + ring * 0.15  # 0.5, 0.65, 0.8, 0.95
-            ring_radius = base_radius * ring_scale
-            ring_rotation = rotation + ring * 15  # Each ring rotates slightly differently
+        # Create the characteristic curved organic petal pattern like preview.webp
+        for symmetry_order in range(4, 0, -1):  # Create 4 layers, largest first
+            layer_scale = 0.3 + symmetry_order * 0.2  # 0.5, 0.7, 0.9, 1.1
+            layer_radius = base_radius * layer_scale
+            layer_rotation = rotation + symmetry_order * 8  # Each layer rotates slightly
             
-            # Color for this ring
-            ring_color = colors[ring % len(colors)]
-            brightness = min(1.0, 0.4 + amplitude * 0.6 + ring * 0.1)
-            ring_color = tuple(int(c * brightness) for c in ring_color)
+            # Number of petals for this layer (higher order = more petals)
+            petals_in_layer = num_main_petals * symmetry_order // 2
             
-            for petal in range(num_petals):
-                petal_angle = (360 / num_petals) * petal + ring_rotation
+            # Color for this layer
+            layer_color = colors[(symmetry_order - 1) % len(colors)]
+            brightness = min(1.0, 0.3 + amplitude * 0.5 + symmetry_order * 0.1)
+            layer_color = tuple(int(c * brightness) for c in layer_color)
+            
+            # Create the organic flowing petals
+            for petal in range(petals_in_layer):
+                petal_angle = (360 / petals_in_layer) * petal + layer_rotation
                 
-                # Petal size variation based on mel bands
+                # Use mel bands to create variation in petal shapes
                 mel_idx = petal % len(mel_bands)
-                petal_scale = 1.0 + mel_bands[mel_idx] * 2
-                current_radius = ring_radius * petal_scale
+                mel_influence = mel_bands[mel_idx]
                 
-                # Create smooth curved petal shape
-                angle_rad = math.radians(petal_angle)
-                
-                # Calculate multiple points along the petal for smooth curves
+                # Create organic flowing petal shape with multiple curves
                 petal_points = []
                 
-                # Petal base (wide part near center)
-                base_radius = current_radius * 0.3
-                base_width = 0.4  # Width of petal base in radians
+                # Generate smooth organic petal outline
+                for curve_step in range(36):  # 36 points for very smooth curves
+                    t = curve_step / 35.0  # Parameter from 0 to 1 along petal
+                    
+                    # Organic radius function - creates the flowing curved shape
+                    base_curve = math.sin(t * math.pi)  # Basic petal shape
+                    organic_modifier = (
+                        math.sin(t * math.pi * 3 + petal_angle * 0.01) * 0.15 +  # High freq ripples
+                        math.cos(t * math.pi * 2 + time_progress * 0.1) * 0.1 +   # Breathing effect
+                        mel_influence * 0.3  # Audio reactivity
+                    )
+                    
+                    # Radius varies organically along the petal
+                    point_radius = layer_radius * (0.2 + 0.8 * t) * (base_curve + organic_modifier)
+                    
+                    # Angular width of petal - wider at base, narrower at tip
+                    petal_width = math.sin(t * math.pi) * 0.8  # Width function
+                    
+                    # Create the flowing organic outline
+                    for side in [-1, 1]:  # Left and right sides of petal
+                        side_angle = math.radians(petal_angle + side * petal_width * 15)  # 15 degrees max width
+                        side_x = int(center_x + math.cos(side_angle) * point_radius)
+                        side_y = int(center_y + math.sin(side_angle) * point_radius)
+                        
+                        # Only add every other point to avoid overcrowding
+                        if curve_step % 2 == side % 2:
+                            petal_points.append([side_x, side_y])
                 
-                # Create curved petal outline
-                for curve_point in range(20):  # 20 points for smooth curve
-                    t = curve_point / 19.0  # Parameter from 0 to 1
+                # Create filled organic petal shape
+                if len(petal_points) >= 3:
+                    petal_points = np.array(petal_points, dtype=np.int32)
                     
-                    # Radius varies along the petal (wide at base, narrow at tip)
-                    point_radius = base_radius + (current_radius - base_radius) * t
+                    # Fill the organic petal
+                    cv2.fillPoly(img, [petal_points], layer_color)
                     
-                    # Width varies along the petal (creates the petal shape)
-                    width_factor = math.sin(math.pi * (1 - t)) * base_width  # Smooth width variation
-                    
-                    # Left edge of petal
-                    left_angle = angle_rad - width_factor
-                    left_x = int(center_x + math.cos(left_angle) * point_radius)
-                    left_y = int(center_y + math.sin(left_angle) * point_radius)
-                    petal_points.append([left_x, left_y])
-                
-                # Add tip point
-                tip_x = int(center_x + math.cos(angle_rad) * current_radius)
-                tip_y = int(center_y + math.sin(angle_rad) * current_radius)
-                petal_points.append([tip_x, tip_y])
-                
-                # Right edge of petal (reverse order)
-                for curve_point in range(19, -1, -1):
-                    t = curve_point / 19.0
-                    point_radius = base_radius + (current_radius - base_radius) * t
-                    width_factor = math.sin(math.pi * (1 - t)) * base_width
-                    
-                    right_angle = angle_rad + width_factor
-                    right_x = int(center_x + math.cos(right_angle) * point_radius)
-                    right_y = int(center_y + math.sin(right_angle) * point_radius)
-                    petal_points.append([right_x, right_y])
-                
-                # Draw filled petal
-                petal_points = np.array(petal_points, dtype=np.int32)
-                cv2.fillPoly(img, [petal_points], ring_color)
-                
-                # Add petal outline for definition
-                outline_color = tuple(min(255, int(c * 1.3)) for c in ring_color)
-                cv2.polylines(img, [petal_points], True, outline_color, 2)
-                
-                # Add gradient effect within petal
-                for gradient_step in range(3):
-                    gradient_radius = base_radius + (current_radius - base_radius) * (0.3 + gradient_step * 0.25)
-                    gradient_width = base_width * (1 - gradient_step * 0.2)
-                    
-                    # Create smaller gradient shapes
-                    gradient_points = []
-                    for side in [-1, 1]:  # Left and right side
-                        gradient_angle = angle_rad + side * gradient_width * 0.5
-                        grad_x = int(center_x + math.cos(gradient_angle) * gradient_radius)
-                        grad_y = int(center_y + math.sin(gradient_angle) * gradient_radius)
-                        gradient_points.append([grad_x, grad_y])
-                    
-                    # Add tip for gradient
-                    grad_tip_x = int(center_x + math.cos(angle_rad) * gradient_radius)
-                    grad_tip_y = int(center_y + math.sin(angle_rad) * gradient_radius)
-                    gradient_points.append([grad_tip_x, grad_tip_y])
-                    
-                    if len(gradient_points) >= 3:
-                        gradient_points = np.array(gradient_points, dtype=np.int32)
-                        gradient_color = tuple(int(c * (0.8 + gradient_step * 0.1)) for c in ring_color)
-                        cv2.fillPoly(img, [gradient_points], gradient_color)
+                    # Add subtle outline for definition
+                    outline_color = tuple(min(255, int(c * 1.2)) for c in layer_color)
+                    cv2.polylines(img, [petal_points], True, outline_color, 1)
         
-        # Central decorative element
-        center_radius = int(15 + amplitude * 20)
+        # Add the characteristic gradient/flowing effect like in preview.webp
+        overlay = img.copy()
         
-        # Multi-layered center
-        for center_ring in range(4):
-            ring_size = center_radius - center_ring * 3
-            if ring_size > 0:
-                center_color = colors[center_ring % len(colors)]
-                center_brightness = 1.0 - center_ring * 0.15
-                center_color = tuple(int(c * center_brightness) for c in center_color)
+        # Create flowing radial gradient effect
+        for radius_step in range(20, int(base_radius * 1.2), 8):
+            for angle_step in range(0, 360, 3):
+                angle_rad = math.radians(angle_step + rotation * 0.1)
                 
-                cv2.circle(img, (center_x, center_y), ring_size, center_color, 2)
+                # Create flowing effect with audio reactivity
+                flow_influence = (
+                    math.sin(angle_step * 0.05 + time_progress * 0.2) * 0.3 +
+                    math.cos(radius_step * 0.03 + time_progress * 0.15) * 0.2
+                )
+                
+                effective_radius = radius_step * (1 + flow_influence * amplitude)
+                
+                x = int(center_x + math.cos(angle_rad) * effective_radius)
+                y = int(center_y + math.sin(angle_rad) * effective_radius)
+                
+                # Check if we're inside the pattern
+                if 0 <= x < self.width and 0 <= y < self.height:
+                    if np.any(img[y, x] > 0):  # If there's already color here
+                        # Add flowing gradient effect
+                        gradient_intensity = 1.0 - (radius_step / (base_radius * 1.2))
+                        for color_channel in range(3):
+                            enhancement = int(gradient_intensity * 30 * amplitude)
+                            overlay[y, x, color_channel] = min(255, overlay[y, x, color_channel] + enhancement)
         
-        # Final center point
-        cv2.circle(img, (center_x, center_y), 3, (255, 255, 255), -1)
+        # Blend the gradient overlay
+        img = cv2.addWeighted(img, 0.7, overlay, 0.3, 0)
+        
+        # Add the characteristic center pattern
+        center_radius = int(15 + amplitude * 25)
+        
+        # Create concentric center like in preview.webp
+        for center_ring in range(5):
+            ring_radius = center_radius - center_ring * 3
+            if ring_radius > 0:
+                ring_color = colors[center_ring % len(colors)]
+                ring_brightness = 1.0 - center_ring * 0.15
+                ring_color = tuple(int(c * ring_brightness) for c in ring_color)
+                
+                # Alternate between filled and outline rings
+                if center_ring % 2 == 0:
+                    cv2.circle(img, (center_x, center_y), ring_radius, ring_color, -1)  # Filled
+                else:
+                    cv2.circle(img, (center_x, center_y), ring_radius, ring_color, 2)   # Outline
+        
+        # Final bright center point
+        cv2.circle(img, (center_x, center_y), 2, (255, 255, 255), -1)
+        
+        # Apply slight blur for organic smoothness like in preview.webp
+        img = cv2.GaussianBlur(img, (3, 3), 0.8)
         
         return img
     
