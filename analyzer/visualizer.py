@@ -7,6 +7,7 @@ Adds visualization capabilities using Essentia for consistency
 import numpy as np
 import cv2
 import math
+import os
 from typing import Dict, Optional
 import essentia.standard as es
 
@@ -79,11 +80,11 @@ class VisualizationGenerator:
             'spectrum': spectrum
         }
     
-    def generate_mandala_frame(self, features: Dict, time_progress: float) -> np.ndarray:
-        """Generate complex geometric mandala with intricate patterns"""
+    def generate_sacred_geometry_frame(self, features: Dict, time_progress: float) -> np.ndarray:
+        """Generate complex sacred geometry mandala like the original screenshot"""
         img = np.zeros((self.height, self.width, 3), dtype=np.uint8)
         
-        # Extract and scale features for better visibility
+        # Extract and scale features
         bass = min(features['bass'] * 500, 1.0)
         mid = min(features['mid'] * 300, 1.0)
         treble = min(features['treble'] * 200, 1.0)
@@ -93,177 +94,304 @@ class VisualizationGenerator:
         colors = self.color_palettes['neon']
         center_x, center_y = self.center
         
-        # Geometric mandala parameters
-        base_segments = 12 + int(bass * 12)  # 12-24 primary segments
-        rotation = (time_progress * 10 + mid * 15) % 360
-        base_radius = 60 + amplitude * 100  # 60-160 pixel base radius
+        # Base parameters for sacred geometry
+        rotation = (time_progress * 8 + mid * 10) % 360
+        base_radius = 50 + amplitude * 120  # 50-170 pixel radius
         
-        # Layer 1: Outer geometric ring with complex patterns
-        for segment in range(base_segments):
-            segment_angle = (360 / base_segments) * segment + rotation
-            angle_rad = math.radians(segment_angle)
-            
-            # Mel band influence for this segment
-            mel_idx = segment % len(mel_bands)
-            mel_influence = 1.0 + mel_bands[mel_idx] * 2
+        # Layer 1: Outermost geometric ring - Complex interlocking patterns
+        outer_segments = 24  # More segments for complexity
+        outer_radius = base_radius * 1.0
+        
+        for i in range(outer_segments):
+            angle = (360 / outer_segments) * i + rotation
+            angle_rad = math.radians(angle)
             
             # Color cycling
-            color_idx = (segment + int(treble * 10)) % len(colors)
+            color_idx = i % len(colors)
             color = colors[color_idx]
-            brightness = min(1.0, 0.4 + amplitude * 0.6 + mel_bands[mel_idx] * 0.3)
+            brightness = min(1.0, 0.6 + amplitude * 0.4)
             color = tuple(int(c * brightness) for c in color)
             
-            # Outer radius with variation
-            outer_radius = base_radius * mel_influence
-            inner_radius = outer_radius * 0.7
-            
-            # Calculate segment points
+            # Create interlocking geometric shapes
+            # Outer points
             outer_x = int(center_x + math.cos(angle_rad) * outer_radius)
             outer_y = int(center_y + math.sin(angle_rad) * outer_radius)
+            
+            # Inner points for this segment
+            inner_radius = outer_radius * 0.75
             inner_x = int(center_x + math.cos(angle_rad) * inner_radius)
             inner_y = int(center_y + math.sin(angle_rad) * inner_radius)
             
-            # Create geometric segment with angular sides
-            next_segment_angle = (360 / base_segments) * ((segment + 1) % base_segments) + rotation
-            next_angle_rad = math.radians(next_segment_angle)
+            # Create connecting lines to multiple other points (sacred geometry)
+            for connection in [3, 5, 8, 12]:  # Connect to various other points
+                if i + connection < outer_segments:
+                    connect_angle = (360 / outer_segments) * (i + connection) + rotation
+                    connect_rad = math.radians(connect_angle)
+                    connect_x = int(center_x + math.cos(connect_rad) * inner_radius)
+                    connect_y = int(center_y + math.sin(connect_rad) * inner_radius)
+                    
+                    # Draw connecting line
+                    cv2.line(img, (inner_x, inner_y), (connect_x, connect_y), 
+                             tuple(int(c * 0.7) for c in color), 1)
             
-            next_outer_x = int(center_x + math.cos(next_angle_rad) * outer_radius)
-            next_outer_y = int(center_y + math.sin(next_angle_rad) * outer_radius)
-            next_inner_x = int(center_x + math.cos(next_angle_rad) * inner_radius)
-            next_inner_y = int(center_y + math.sin(next_angle_rad) * inner_radius)
+            # Draw main radial line
+            cv2.line(img, (inner_x, inner_y), (outer_x, outer_y), color, 3)
             
-            # Draw geometric segment as polygon
-            segment_points = np.array([
-                [inner_x, inner_y],
-                [outer_x, outer_y],
-                [next_outer_x, next_outer_y],
-                [next_inner_x, next_inner_y]
-            ], dtype=np.int32)
-            
-            cv2.fillPoly(img, [segment_points], color)
-            cv2.polylines(img, [segment_points], True, tuple(min(255, int(c * 1.3)) for c in color), 1)
+            # Add geometric nodes
+            cv2.circle(img, (outer_x, outer_y), 3, color, -1)
         
-        # Layer 2: Middle geometric pattern - star shapes
-        mid_segments = base_segments * 2  # Double the segments for finer detail
-        mid_radius = base_radius * 0.6
+        # Layer 2: Middle geometric pattern - Star polygons
+        mid_segments = 12
+        mid_radius = base_radius * 0.7
         
-        for segment in range(0, mid_segments, 2):  # Every other segment for star pattern
-            segment_angle = (360 / mid_segments) * segment + rotation * 0.5
-            angle_rad = math.radians(segment_angle)
+        for i in range(mid_segments):
+            angle = (360 / mid_segments) * i + rotation * 0.7
             
-            color_idx = (segment // 2) % len(colors)
-            color = colors[color_idx]
-            brightness = min(1.0, 0.5 + mid * 0.5)
-            color = tuple(int(c * brightness) for c in color)
-            
-            # Star point geometry
-            point_radius = mid_radius * (1.0 + mel_bands[segment % len(mel_bands)])
-            point_x = int(center_x + math.cos(angle_rad) * point_radius)
-            point_y = int(center_y + math.sin(angle_rad) * point_radius)
-            
-            # Create star points with connecting lines
-            base_radius_inner = mid_radius * 0.4
-            base_x = int(center_x + math.cos(angle_rad) * base_radius_inner)
-            base_y = int(center_y + math.sin(angle_rad) * base_radius_inner)
-            
-            # Side points for triangular star points
-            side_angle_offset = math.radians(360 / mid_segments)
-            left_angle = angle_rad - side_angle_offset * 0.3
-            right_angle = angle_rad + side_angle_offset * 0.3
-            
-            left_x = int(center_x + math.cos(left_angle) * base_radius_inner)
-            left_y = int(center_y + math.sin(left_angle) * base_radius_inner)
-            right_x = int(center_x + math.cos(right_angle) * base_radius_inner)
-            right_y = int(center_y + math.sin(right_angle) * base_radius_inner)
-            
-            # Draw triangular star point
-            star_points = np.array([
-                [base_x, base_y],
-                [left_x, left_y],
-                [point_x, point_y],
-                [right_x, right_y]
-            ], dtype=np.int32)
-            
-            cv2.fillPoly(img, [star_points], color)
-            cv2.polylines(img, [star_points], True, tuple(min(255, int(c * 1.4)) for c in color), 2)
-        
-        # Layer 3: Inner geometric ring - hexagonal/octagonal patterns
-        inner_segments = 8  # Fixed geometric symmetry
-        inner_radius = base_radius * 0.35
-        
-        for segment in range(inner_segments):
-            segment_angle = (360 / inner_segments) * segment + rotation * -0.3
-            angle_rad = math.radians(segment_angle)
-            
-            color_idx = segment % len(colors)
-            color = colors[color_idx]
-            brightness = min(1.0, 0.6 + treble * 0.4)
-            color = tuple(int(c * brightness) for c in color)
-            
-            # Create geometric shapes (hexagons/diamonds)
-            shape_radius = inner_radius * (0.8 + mel_bands[segment % len(mel_bands)] * 0.4)
-            
-            # Generate regular polygon points
-            polygon_sides = 6  # Hexagon
-            polygon_points = []
-            
-            for poly_point in range(polygon_sides):
-                poly_angle = angle_rad + math.radians((360 / polygon_sides) * poly_point)
-                poly_x = int(center_x + math.cos(poly_angle) * shape_radius)
-                poly_y = int(center_y + math.sin(poly_angle) * shape_radius)
-                polygon_points.append([poly_x, poly_y])
-            
-            polygon_points = np.array(polygon_points, dtype=np.int32)
-            cv2.fillPoly(img, [polygon_points], color)
-            cv2.polylines(img, [polygon_points], True, 
-                         tuple(min(255, int(c * 1.5)) for c in color), 2)
-        
-        # Layer 4: Geometric connecting lines - sacred geometry
-        connection_radius = base_radius * 0.8
-        num_connections = base_segments
-        
-        for i in range(num_connections):
-            angle1 = math.radians((360 / num_connections) * i + rotation)
-            angle2 = math.radians((360 / num_connections) * ((i + 3) % num_connections) + rotation)  # Connect every 3rd point
-            
-            x1 = int(center_x + math.cos(angle1) * connection_radius)
-            y1 = int(center_y + math.sin(angle1) * connection_radius)
-            x2 = int(center_x + math.cos(angle2) * connection_radius)
-            y2 = int(center_y + math.sin(angle2) * connection_radius)
-            
-            color_idx = i % len(colors)
-            color = colors[color_idx]
-            alpha = min(255, int(100 + amplitude * 155))  # Semi-transparent connecting lines
-            color = tuple(int(c * 0.6) for c in color)  # Dimmer for background lines
-            
-            cv2.line(img, (x1, y1), (x2, y2), color, 1)
-        
-        # Central mandala core - complex geometric center
-        core_radius = int(20 + amplitude * 20)
-        
-        # Multiple concentric geometric shapes in center
-        for core_ring in range(4):
-            ring_radius = core_radius - core_ring * 4
-            if ring_radius > 0:
-                color = colors[core_ring % len(colors)]
-                brightness = 1.0 - core_ring * 0.2
+            # Create star polygon points
+            for star_layer in range(3):
+                star_angle = angle + star_layer * 120  # 3-fold symmetry
+                star_rad = math.radians(star_angle)
+                
+                # Variable radius based on mel bands
+                mel_idx = (i + star_layer) % len(mel_bands)
+                radius_var = mid_radius * (0.8 + mel_bands[mel_idx] * 0.4)
+                
+                star_x = int(center_x + math.cos(star_rad) * radius_var)
+                star_y = int(center_y + math.sin(star_rad) * radius_var)
+                
+                # Color for this star layer
+                color = colors[(i + star_layer) % len(colors)]
+                brightness = min(1.0, 0.5 + mid * 0.5)
                 color = tuple(int(c * brightness) for c in color)
                 
-                # Draw geometric center shapes
-                if core_ring % 2 == 0:
-                    # Circles
-                    cv2.circle(img, (center_x, center_y), ring_radius, color, 2)
+                # Draw star points
+                cv2.circle(img, (star_x, star_y), 4, color, -1)
+                
+                # Connect star points to form triangles
+                next_star_angle = star_angle + 120
+                next_star_rad = math.radians(next_star_angle)
+                next_star_x = int(center_x + math.cos(next_star_rad) * radius_var)
+                next_star_y = int(center_y + math.sin(next_star_rad) * radius_var)
+                
+                cv2.line(img, (star_x, star_y), (next_star_x, next_star_y), color, 2)
+        
+        # Layer 3: Inner geometric ring - Complex polygons
+        inner_segments = 8  # Octagonal base
+        inner_radius = base_radius * 0.45
+        
+        for i in range(inner_segments):
+            angle = (360 / inner_segments) * i + rotation * -0.5
+            angle_rad = math.radians(angle)
+            
+            # Create multiple geometric shapes per segment
+            for shape_type in range(2):
+                shape_radius = inner_radius * (0.8 + shape_type * 0.3)
+                
+                # Create polygon vertices
+                polygon_sides = 6 if shape_type == 0 else 4  # Hexagons and squares
+                polygon_points = []
+                
+                for vertex in range(polygon_sides):
+                    vertex_angle = angle + (360 / polygon_sides) * vertex
+                    vertex_rad = math.radians(vertex_angle)
+                    vertex_x = int(center_x + math.cos(vertex_rad) * shape_radius)
+                    vertex_y = int(center_y + math.sin(vertex_rad) * shape_radius)
+                    polygon_points.append([vertex_x, vertex_y])
+                
+                # Color and draw polygon
+                color = colors[i % len(colors)]
+                brightness = min(1.0, 0.4 + treble * 0.6)
+                color = tuple(int(c * brightness) for c in color)
+                
+                polygon_points = np.array(polygon_points, dtype=np.int32)
+                cv2.polylines(img, [polygon_points], True, color, 2)
+                
+                # Fill with semi-transparent color
+                fill_color = tuple(int(c * 0.3) for c in color)
+                cv2.fillPoly(img, [polygon_points], fill_color)
+        
+        # Layer 4: Sacred geometry center - Flower of Life inspired
+        center_radius = base_radius * 0.25
+        
+        # Create overlapping circles (Flower of Life pattern)
+        for circle_ring in range(3):
+            ring_radius = center_radius * (0.4 + circle_ring * 0.2)
+            circles_in_ring = 6 if circle_ring > 0 else 1  # Center + 6 around
+            
+            for circle_idx in range(circles_in_ring):
+                if circle_ring == 0:  # Center circle
+                    circle_x, circle_y = center_x, center_y
                 else:
-                    # Squares/diamonds
-                    square_points = []
-                    for corner in range(4):
-                        corner_angle = math.radians(45 + 90 * corner + rotation * 0.1)
-                        corner_x = int(center_x + math.cos(corner_angle) * ring_radius)
-                        corner_y = int(center_y + math.sin(corner_angle) * ring_radius)
-                        square_points.append([corner_x, corner_y])
+                    circle_angle = (360 / circles_in_ring) * circle_idx + rotation * 0.2
+                    circle_rad = math.radians(circle_angle)
+                    offset_radius = ring_radius * 0.6
+                    circle_x = int(center_x + math.cos(circle_rad) * offset_radius)
+                    circle_y = int(center_y + math.sin(circle_rad) * offset_radius)
+                
+                # Color based on ring and audio
+                color = colors[circle_ring % len(colors)]
+                brightness = min(1.0, 0.5 + amplitude * 0.5)
+                color = tuple(int(c * brightness) for c in color)
+                
+                # Draw circle outline
+                cv2.circle(img, (circle_x, circle_y), int(ring_radius * 0.4), color, 2)
+        
+        # Layer 5: Geometric connecting lines - Sacred geometry intersections
+        connection_radius = base_radius * 0.6
+        num_connections = 12
+        
+        for i in range(num_connections):
+            # Create geometric star patterns
+            for multiplier in [2, 3, 5]:  # Different geometric ratios
+                angle1 = (360 / num_connections) * i + rotation
+                angle2 = (360 / num_connections) * ((i * multiplier) % num_connections) + rotation
+                
+                angle1_rad = math.radians(angle1)
+                angle2_rad = math.radians(angle2)
+                
+                x1 = int(center_x + math.cos(angle1_rad) * connection_radius)
+                y1 = int(center_y + math.sin(angle1_rad) * connection_radius)
+                x2 = int(center_x + math.cos(angle2_rad) * connection_radius)
+                y2 = int(center_y + math.sin(angle2_rad) * connection_radius)
+                
+                # Color based on connection type
+                color = colors[multiplier % len(colors)]
+                alpha_brightness = 0.3 + (bass * 0.3)
+                color = tuple(int(c * alpha_brightness) for c in color)
+                
+                cv2.line(img, (x1, y1), (x2, y2), color, 1)
+        
+        # Final center point - The sacred center
+        center_size = max(3, int(5 + amplitude * 8))
+        center_color = colors[0]
+        cv2.circle(img, (center_x, center_y), center_size, (255, 255, 255), -1)  # White center
+        cv2.circle(img, (center_x, center_y), center_size + 2, center_color, 2)  # Colored ring
+        
+        return img
+    
+    def generate_mandala_frame(self, features: Dict, time_progress: float) -> np.ndarray:
+        """Generate radial symmetry pattern with smooth curved petals like preview.webp"""
+        img = np.zeros((self.height, self.width, 3), dtype=np.uint8)
+        
+        # Extract and scale features
+        bass = min(features['bass'] * 500, 1.0)
+        mid = min(features['mid'] * 300, 1.0)
+        treble = min(features['treble'] * 200, 1.0)
+        amplitude = min(features['amplitude'] * 100, 1.0)
+        mel_bands = features['mel_bands']
+        
+        colors = self.color_palettes['neon']
+        center_x, center_y = self.center
+        
+        # Radial symmetry parameters
+        num_petals = 8 + int(bass * 8)  # 8-16 petals
+        rotation = (time_progress * 12 + mid * 8) % 360
+        base_radius = 60 + amplitude * 100  # Base size
+        
+        # Create the characteristic curved petal pattern
+        for ring in range(4):  # Multiple concentric rings
+            ring_scale = 0.5 + ring * 0.15  # 0.5, 0.65, 0.8, 0.95
+            ring_radius = base_radius * ring_scale
+            ring_rotation = rotation + ring * 15  # Each ring rotates slightly differently
+            
+            # Color for this ring
+            ring_color = colors[ring % len(colors)]
+            brightness = min(1.0, 0.4 + amplitude * 0.6 + ring * 0.1)
+            ring_color = tuple(int(c * brightness) for c in ring_color)
+            
+            for petal in range(num_petals):
+                petal_angle = (360 / num_petals) * petal + ring_rotation
+                
+                # Petal size variation based on mel bands
+                mel_idx = petal % len(mel_bands)
+                petal_scale = 1.0 + mel_bands[mel_idx] * 2
+                current_radius = ring_radius * petal_scale
+                
+                # Create smooth curved petal shape
+                angle_rad = math.radians(petal_angle)
+                
+                # Calculate multiple points along the petal for smooth curves
+                petal_points = []
+                
+                # Petal base (wide part near center)
+                base_radius = current_radius * 0.3
+                base_width = 0.4  # Width of petal base in radians
+                
+                # Create curved petal outline
+                for curve_point in range(20):  # 20 points for smooth curve
+                    t = curve_point / 19.0  # Parameter from 0 to 1
                     
-                    square_points = np.array(square_points, dtype=np.int32)
-                    cv2.polylines(img, [square_points], True, color, 2)
+                    # Radius varies along the petal (wide at base, narrow at tip)
+                    point_radius = base_radius + (current_radius - base_radius) * t
+                    
+                    # Width varies along the petal (creates the petal shape)
+                    width_factor = math.sin(math.pi * (1 - t)) * base_width  # Smooth width variation
+                    
+                    # Left edge of petal
+                    left_angle = angle_rad - width_factor
+                    left_x = int(center_x + math.cos(left_angle) * point_radius)
+                    left_y = int(center_y + math.sin(left_angle) * point_radius)
+                    petal_points.append([left_x, left_y])
+                
+                # Add tip point
+                tip_x = int(center_x + math.cos(angle_rad) * current_radius)
+                tip_y = int(center_y + math.sin(angle_rad) * current_radius)
+                petal_points.append([tip_x, tip_y])
+                
+                # Right edge of petal (reverse order)
+                for curve_point in range(19, -1, -1):
+                    t = curve_point / 19.0
+                    point_radius = base_radius + (current_radius - base_radius) * t
+                    width_factor = math.sin(math.pi * (1 - t)) * base_width
+                    
+                    right_angle = angle_rad + width_factor
+                    right_x = int(center_x + math.cos(right_angle) * point_radius)
+                    right_y = int(center_y + math.sin(right_angle) * point_radius)
+                    petal_points.append([right_x, right_y])
+                
+                # Draw filled petal
+                petal_points = np.array(petal_points, dtype=np.int32)
+                cv2.fillPoly(img, [petal_points], ring_color)
+                
+                # Add petal outline for definition
+                outline_color = tuple(min(255, int(c * 1.3)) for c in ring_color)
+                cv2.polylines(img, [petal_points], True, outline_color, 2)
+                
+                # Add gradient effect within petal
+                for gradient_step in range(3):
+                    gradient_radius = base_radius + (current_radius - base_radius) * (0.3 + gradient_step * 0.25)
+                    gradient_width = base_width * (1 - gradient_step * 0.2)
+                    
+                    # Create smaller gradient shapes
+                    gradient_points = []
+                    for side in [-1, 1]:  # Left and right side
+                        gradient_angle = angle_rad + side * gradient_width * 0.5
+                        grad_x = int(center_x + math.cos(gradient_angle) * gradient_radius)
+                        grad_y = int(center_y + math.sin(gradient_angle) * gradient_radius)
+                        gradient_points.append([grad_x, grad_y])
+                    
+                    # Add tip for gradient
+                    grad_tip_x = int(center_x + math.cos(angle_rad) * gradient_radius)
+                    grad_tip_y = int(center_y + math.sin(angle_rad) * gradient_radius)
+                    gradient_points.append([grad_tip_x, grad_tip_y])
+                    
+                    if len(gradient_points) >= 3:
+                        gradient_points = np.array(gradient_points, dtype=np.int32)
+                        gradient_color = tuple(int(c * (0.8 + gradient_step * 0.1)) for c in ring_color)
+                        cv2.fillPoly(img, [gradient_points], gradient_color)
+        
+        # Central decorative element
+        center_radius = int(15 + amplitude * 20)
+        
+        # Multi-layered center
+        for center_ring in range(4):
+            ring_size = center_radius - center_ring * 3
+            if ring_size > 0:
+                center_color = colors[center_ring % len(colors)]
+                center_brightness = 1.0 - center_ring * 0.15
+                center_color = tuple(int(c * center_brightness) for c in center_color)
+                
+                cv2.circle(img, (center_x, center_y), ring_size, center_color, 2)
         
         # Final center point
         cv2.circle(img, (center_x, center_y), 3, (255, 255, 255), -1)
@@ -378,12 +506,41 @@ class VisualizationGenerator:
         
         print(f"Audio loaded: {len(audio)/44100:.2f}s duration")
         
-        # Setup video writer
-        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-        video_writer = cv2.VideoWriter(output_file, fourcc, fps, (self.width, self.height))
+        # Setup video writer with fallback codecs
+        fourcc_options = [
+            ('mp4v', 'mp4'),
+            ('XVID', 'avi'), 
+            ('MJPG', 'avi'),
+            ('X264', 'mp4')
+        ]
         
-        if not video_writer.isOpened():
-            print("Error: Could not open video writer")
+        video_writer = None
+        actual_output_file = output_file
+        
+        for fourcc_code, extension in fourcc_options:
+            try:
+                # Adjust output filename extension if needed
+                if not output_file.lower().endswith(f'.{extension}'):
+                    base_name = os.path.splitext(output_file)[0]
+                    actual_output_file = f"{base_name}.{extension}"
+                
+                fourcc = cv2.VideoWriter_fourcc(*fourcc_code)
+                video_writer = cv2.VideoWriter(actual_output_file, fourcc, fps, (self.width, self.height))
+                
+                if video_writer.isOpened():
+                    print(f"Using codec: {fourcc_code}, output: {actual_output_file}")
+                    break
+                else:
+                    video_writer.release()
+                    video_writer = None
+            except Exception as e:
+                print(f"Failed to create video writer with {fourcc_code}: {e}")
+                if video_writer:
+                    video_writer.release()
+                    video_writer = None
+        
+        if not video_writer or not video_writer.isOpened():
+            print("Error: Could not open video writer with any codec")
             return None
         
         # Calculate frame parameters
@@ -406,15 +563,24 @@ class VisualizationGenerator:
                 # Switch based on audio characteristics
                 if features['bass'] > features['treble']:
                     use_mandala = True  # Mandala for bass-heavy sections
+                elif features['mid'] > features['bass']:
+                    use_sacred = True   # Sacred geometry for mid-heavy sections
                 else:
                     use_mandala = False  # Kaleidoscope for treble-heavy sections
             elif style == "mandala":
                 use_mandala = True
+                use_sacred = False
+            elif style == "sacred_geometry":
+                use_mandala = False
+                use_sacred = True
             else:  # kaleidoscope
                 use_mandala = False
+                use_sacred = False
             
             # Generate frame
-            if use_mandala:
+            if style == "sacred_geometry" or (style == "mixed" and 'use_sacred' in locals() and use_sacred):
+                frame = self.generate_sacred_geometry_frame(features, time_progress * 10)
+            elif use_mandala:
                 frame = self.generate_mandala_frame(features, time_progress * 10)
             else:
                 frame = self.generate_kaleidoscope_frame(features, time_progress * 10)
@@ -428,6 +594,6 @@ class VisualizationGenerator:
                 print(f"Progress: {progress:.1f}% ({frame_idx + 1}/{total_frames})")
         
         video_writer.release()
-        print(f"Visualization saved as {output_file}")
+        print(f"Visualization saved as {actual_output_file}")
         
-        return output_file
+        return actual_output_file
