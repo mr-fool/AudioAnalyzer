@@ -1,7 +1,6 @@
 # Audio Analyzer for LLM with Advanced Visualizations
 
-![screen](https://github.com/user-attachments/assets/fc6b3ec4-15d9-447a-8982-5cc3982c8df1)
-
+![initial](https://github.com/user-attachments/assets/49bc632c-9113-4201-9e84-f7325730852b)
 A powerful audio analysis tool that extracts musical features from audio files and generates natural language descriptions suitable for use with Large Language Models (LLMs). The application provides comprehensive analysis of key, tempo, mood, instrumentation, and other musical characteristics, visualized through an intuitive PyQt5 interface. **NEW: Now includes stunning 90s-style geometric mandala and kaleidoscope video visualizations!**
 
 ## 🎵 Features
@@ -26,10 +25,9 @@ A powerful audio analysis tool that extracts musical features from audio files a
 ## 🖥️ Screenshots
 
 ### Analysis Results
-![spectrum](https://github.com/user-attachments/assets/b7fcbb28-a415-4b02-ae7d-7715c90ca341)
-![mel bands](https://github.com/user-attachments/assets/bca379a5-c83d-49a5-bdbe-2d158d1cb3fd)
-![mfcc co](https://github.com/user-attachments/assets/6aaade4b-b789-4774-9864-3983ffc98e6d)
-
+![spectrum](https://github.com/user-attachments/assets/c42bffb0-4cb7-4b12-a8df-e5b1c9884d5a)
+![mel bands](https://github.com/user-attachments/assets/82ff17a1-de40-4ff6-92d2-5735431fb8f5)
+![mfcc](https://github.com/user-attachments/assets/80fc9e82-c8c1-4930-9040-b8d52c144178)
 ### NEW: Video Visualizations
 *Example visualizations showing radial symmetry mandala, sacred geometry, and kaleidoscope effects responding to music*
 
