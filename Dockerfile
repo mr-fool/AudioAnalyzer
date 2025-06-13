@@ -1,7 +1,7 @@
-# Simple Dockerfile for AudioAnalyzer with visualization
+# Optimized Dockerfile for AudioAnalyzer with GUI support
 FROM python:3.10-slim
 
-# Install only necessary system dependencies
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     # Audio processing
     ffmpeg \
@@ -11,17 +11,31 @@ RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
     pkg-config \
-    # Qt dependencies (for your existing UI)
+    # Qt dependencies
     libqt5gui5 \
     libqt5core5a \
     libqt5widgets5 \
-    # Basic image processing
+    # OpenCV
     libopencv-dev \
+    # X11 and Qt GUI dependencies
+    libxcb-xinerama0 \
+    libxcb-icccm4 \
+    libxcb-image0 \
+    libxcb-keysyms1 \
+    libxcb-render-util0 \
+    libxcb-shape0 \
+    libxcb-xfixes0 \
+    libxcb-xkb1 \
+    xkb-data \
+    libxkbcommon-x11-0 \
+    # Network utilities (removed wget since we don't need it)
+    # Cleanup
     && rm -rf /var/lib/apt/lists/*
 
 # Set environment variables
 ENV PYTHONPATH="/app"
-ENV QT_QPA_PLATFORM=offscreen
+ENV QT_QPA_PLATFORM=offscreen  
+ENV XDG_RUNTIME_DIR=/tmp
 
 # Set working directory
 WORKDIR /app
@@ -29,16 +43,14 @@ WORKDIR /app
 # Copy requirements and install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt && \
-    pip install --no-cache-dir "numpy>=1.21.0,<2.0.0"  # Add this line
+    pip install --no-cache-dir -r requirements.txt
 
-
-# Copy your existing analyzer code structure
+# Copy application code
 COPY analyzer/ ./analyzer/
 COPY main.py .
 
-# Create output directory for visualizations
+# Create output directory
 RUN mkdir -p /app/output
 
-# Default command - your existing PyQt5 application
+# Default command
 CMD ["python", "main.py"]
